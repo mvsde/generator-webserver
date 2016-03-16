@@ -37,4 +37,6 @@ Generator Webserver automatically opens the default web browser via a BrowserSyn
 
 
 ## ToDo
+* [ ] Make plugin available from built-in Photoshop Generator. Strangely not working…
 * [ ] Add option to disable the webserver once it started.
+* [ ] Move from filesystem-based HTML/PNG to RAM-only solution for faster file serving.
