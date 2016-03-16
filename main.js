@@ -9,9 +9,11 @@
   // Load node modules
   // ===================================
 
-  const fs   = require('fs');
-  const path = require('path');
-  const PNG  = require('pngjs').PNG;
+  const fs     = require('fs');
+  const path   = require('path');
+  const PNG    = require('pngjs').PNG;
+  const http   = require('http');
+  const open   = require('open');
 
 
 
@@ -23,10 +25,10 @@
   const menuLabel = '$$$/JavaScripts/Generator/Webserver/Menu=Webserver';
 
   var _document = null;
-
   var _generator = null;
-  var _currentDocumentID = null;
   var _config = null;
+
+  var webserver = null;
 
 
 
@@ -64,7 +66,64 @@
       return
     }
 
+    // Set menu state
     updateMenuState(true);
+
+    // Initial image generation
+    requestEntireDocument();
+
+    // https://gist.github.com/hectorcorrea/2573391
+    webserver = http.createServer(function(req, res) {
+      var now = new Date();
+
+    	var filename = req.url;
+      if (filename === '/' || filename === '') {
+        filename = '/index.html';
+      }
+    	var ext = path.extname(filename);
+    	var localPath = __dirname + '/www';
+    	var validExtensions = {
+    		'.html': 'text/html',
+    		'.js':   'application/javascript',
+    		'.png':  'image/png',
+        'ico':   'image/x-icon'
+    	};
+    	var isValidExt = validExtensions[ext];
+
+    	if (isValidExt) {
+
+    		localPath += filename;
+
+    		fs.exists(localPath, function(exists) {
+    			if(exists) {
+    				console.log("Serving file: " + localPath);
+    				getFile(localPath, res, isValidExt);
+    			} else {
+    				console.log("File not found: " + localPath);
+    				res.writeHead(404);
+    				res.end();
+    			}
+    		});
+
+    	} else {
+    		console.log("Invalid file extension detected: " + ext)
+    	}
+    }).listen(1337);
+
+    function getFile(localPath, res, mimeType) {
+    	fs.readFile(localPath, function(err, contents) {
+    		if(!err) {
+    			res.setHeader('Content-Length', contents.length);
+    			res.setHeader('Content-Type', mimeType);
+    			res.statusCode = 200;
+    			res.end(contents);
+    		} else {
+    			res.writeHead(500);
+    			res.end();
+    		}
+    	});
+    }
+
     _generator.onPhotoshopEvent('imageChanged', handleImageChanged);
   }
 
@@ -101,12 +160,8 @@
   // ===================================
 
 
-  function requestEntireDocument(documentID) {
-    if (!documentID) {
-      console.log('Determining the current document ID');
-    }
-
-    _generator.getDocumentInfo(documentID).then(
+  function requestEntireDocument() {
+    _generator.getDocumentInfo().then(
       function (document) {
         getFlattenedDocumentBitmap(document);
       },
@@ -196,8 +251,7 @@
 
       // set pixel data
       png.data = rgbaPixels;
-      var destination = path.dirname(_document.file) + '/test.png';
-      png.pack().pipe(fs.createWriteStream(path.resolve(destination)));
+      png.pack().pipe(fs.createWriteStream(path.resolve(__dirname + '/www/image.png')));
     },
     function (error) {
         console.error('Error while generating flattened document bitmap:', error);
