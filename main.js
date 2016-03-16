@@ -29,6 +29,8 @@
   var _generator = null;
   var _config    = null;
 
+  var tempImagePath = path.resolve(__dirname + '/www/image.png');
+
   var browserSync = bs.create();
 
 
@@ -43,9 +45,9 @@
 
     _generator.addMenuItem(menuID, menuLabel, true, false).then(
       function () {
-        console.log('Menu created', menuID);
+        console.log('Added menu item:', menuID);
       }, function() {
-        console.error('Menu creation failed', menuID);
+        console.error('Menu creation failed:', menuID);
       }
     );
 
@@ -98,16 +100,10 @@
 
 
 
-  // Handle current document changed
+  // Handle image changed
   // ===================================
 
-  function handleCurrentDocumentChanged(event) {
-    console.log('Current document changed!');
-  }
-
   function handleImageChanged(event) {
-    console.log('Image changed!');
-
     requestEntireDocument();
   }
 
@@ -165,22 +161,22 @@
 
     _generator.evaluateJSXString(str).then(
     function (result) {
-      // get width and height
+      // Get width and height
       var obj = result.split(',');
 
       pixmap.width  = parseInt(obj[0]);
       pixmap.height = parseInt(obj[1]);
 
-      // divider value is on 12th byte
+      // Divider value is on 12th byte
       var divider = pixmap.pixels[12]; // 16 or 32 or more
 
-      // reconstruct buffer by bitmap size multiplied by 4 for RGBA
+      // Rconstruct buffer by bitmap size multiplied by 4 for RGBA
       var len = pixmap.width * pixmap.height * 4;
       var rgbaPixels = new Buffer(len);
 
       var pixels = pixmap.pixels;
 
-      // first 16 bytes of pixmap is header, skip it
+      // First 16 bytes of pixmap is header, skip it
       var n = 16;
       for (var i = 0; i < len; i += 4 ){
         rgbaPixels.writeUInt8(pixels[n], i);
@@ -192,7 +188,7 @@
 
         n += 3;
 
-        // detect the new line and skip bytes by 1 (16) or 2 (32)
+        // Detect the new line and skip bytes by 1 (16) or 2 (32)
         if (i%pixmap.width == 1) {
           if (divider == 16) {
               n += 1;
@@ -209,10 +205,12 @@
 
       // set pixel data
       png.data = rgbaPixels;
-      png.pack().pipe(fs.createWriteStream(path.resolve(__dirname + '/www/image.png')).on('finish', browserSync.reload));
+
+      // Write file and reload browsers
+      png.pack().pipe(fs.createWriteStream(tempImagePath).on('finish', browserSync.reload));
     },
     function (error) {
-        console.error('Error while generating flattened document bitmap:', error);
+        console.error('Error while generating bitmap:', error);
     });
   }
 
