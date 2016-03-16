@@ -1,4 +1,6 @@
 // ADOBE GENERATOR WEBSERVER
+//
+// Based on https://github.com/tomkrcha/generator-bitmaps
 // =============================================================================
 
 
