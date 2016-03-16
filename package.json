@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Open a webserver with Adobe Generator.",
   "main": "main.js",
+  "generator-core-version": "^3.7.1",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/mvsde/generator-webserver/issues"
   },
-  "homepage": "https://github.com/mvsde/generator-webserver#readme"
+  "homepage": "https://github.com/mvsde/generator-webserver#readme",
+  "dependencies": {
+    "pngjs": "^2.2.0"
+  }
 }
