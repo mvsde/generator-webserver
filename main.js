@@ -9,11 +9,12 @@
   // Load node modules
   // ===================================
 
-  const fs     = require('fs');
-  const path   = require('path');
-  const PNG    = require('pngjs').PNG;
-  const http   = require('http');
-  const open   = require('open');
+  const fs   = require('fs');
+  const path = require('path');
+  const PNG  = require('pngjs').PNG;
+  const http = require('http');
+  const open = require('open');
+  const bs   = require('browser-sync');
 
 
 
@@ -24,11 +25,11 @@
   const menuID    = require('./package.json').name;
   const menuLabel = '$$$/JavaScripts/Generator/Webserver/Menu=Webserver';
 
-  var _document = null;
+  var _document  = null;
   var _generator = null;
-  var _config = null;
+  var _config    = null;
 
-  var webserver = null;
+  var browserSync = bs.create();
 
 
 
@@ -72,57 +73,14 @@
     // Initial image generation
     requestEntireDocument();
 
-    // https://gist.github.com/hectorcorrea/2573391
-    webserver = http.createServer(function(req, res) {
-      var now = new Date();
+    browserSync.init({
+      server: __dirname + '/www'
+    });
 
-    	var filename = req.url;
-      if (filename === '/' || filename === '') {
-        filename = '/index.html';
-      }
-    	var ext = path.extname(filename);
-    	var localPath = __dirname + '/www';
-    	var validExtensions = {
-    		'.html': 'text/html',
-    		'.js':   'application/javascript',
-    		'.png':  'image/png',
-        'ico':   'image/x-icon'
-    	};
-    	var isValidExt = validExtensions[ext];
-
-    	if (isValidExt) {
-
-    		localPath += filename;
-
-    		fs.exists(localPath, function(exists) {
-    			if(exists) {
-    				console.log("Serving file: " + localPath);
-    				getFile(localPath, res, isValidExt);
-    			} else {
-    				console.log("File not found: " + localPath);
-    				res.writeHead(404);
-    				res.end();
-    			}
-    		});
-
-    	} else {
-    		console.log("Invalid file extension detected: " + ext)
-    	}
-    }).listen(1337);
-
-    function getFile(localPath, res, mimeType) {
-    	fs.readFile(localPath, function(err, contents) {
-    		if(!err) {
-    			res.setHeader('Content-Length', contents.length);
-    			res.setHeader('Content-Type', mimeType);
-    			res.statusCode = 200;
-    			res.end(contents);
-    		} else {
-    			res.writeHead(500);
-    			res.end();
-    		}
-    	});
-    }
+    /*fs.watch(__dirname + '/www', function(event, filename) {
+      console.log('File changed', filename);
+      browserSync.reload();
+    });*/
 
     _generator.onPhotoshopEvent('imageChanged', handleImageChanged);
   }
@@ -235,7 +193,7 @@
         n += 3;
 
         // detect the new line and skip bytes by 1 (16) or 2 (32)
-        if(i%pixmap.width == 1){
+        if (i%pixmap.width == 1) {
           if (divider == 16) {
               n += 1;
           } else if (divider == 32) {
@@ -251,7 +209,7 @@
 
       // set pixel data
       png.data = rgbaPixels;
-      png.pack().pipe(fs.createWriteStream(path.resolve(__dirname + '/www/image.png')));
+      png.pack().pipe(fs.createWriteStream(path.resolve(__dirname + '/www/image.png')).on('finish', browserSync.reload));
     },
     function (error) {
         console.error('Error while generating flattened document bitmap:', error);
