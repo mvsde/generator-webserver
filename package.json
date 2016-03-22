@@ -1,6 +1,6 @@
 {
   "name": "generator-webserver",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Open the current Photoshop document as an HTML file with any web browser.",
   "main": "main.js",
   "generator-core-version": "^3.7.1",

@@ -33,7 +33,7 @@ Create the following file structure somewhere:
 ## Usage
 In Photoshop activate `File > Generate > Webserver`.
 
-The current image is available via http://localhost:1337.
+The selected Photoshop document is available via http://localhost:1337.
 
 The server establishes SSE tunnels to all clients. If the Photoshop image changes all clients will be reloaded.
 
