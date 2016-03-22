@@ -23,7 +23,7 @@
   // ===================================
 
   const menuID    = require('./package.json').name;
-  const menuLabel = '$$$/JavaScripts/Generator/Webserver/Menu=Webserver';
+  const menuLabel = 'Webserver';
 
   var _document  = null;
   var _generator = null;

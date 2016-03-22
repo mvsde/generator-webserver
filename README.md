@@ -24,7 +24,7 @@ Create the following file structure somewhere:
   3. Set `password` as password.
   4. Restart Photoshop.
 2. Unzip the contents of the previously downloaded Generator Core into the corresponding folder.
-3. Get [this plugin](https://github.com/mvsde/generator-webserver/archive/master.zip) and place it in `generator-webserver`
+3. Get [this plugin](https://github.com/mvsde/generator-webserver/releases/latest) and place it in `generator-webserver`
 4. Run `npm install` inside `generator-core` and `generator-webserver`.
 5. `cd` into `generator-core`.
 6. Run `node app.js -f ../plugins`.
