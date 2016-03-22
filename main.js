@@ -12,11 +12,9 @@
   // ===================================
 
   const fs   = require('fs');
-  const path = require('path');
   const PNG  = require('pngjs').PNG;
   const http = require('http');
   const open = require('open');
-  const bs   = require('browser-sync');
 
 
 
@@ -31,9 +29,8 @@
   var _generator = null;
   var _config    = null;
 
-  var tempImagePath = path.resolve(__dirname + '/www/image.png');
-
-  var browserSync = bs.create();
+  var tempImage  = null;
+  var reloadPage = false;
 
 
 
@@ -77,16 +74,80 @@
     // Initial image generation
     requestEntireDocument();
 
-    browserSync.init({
-      server: __dirname + '/www'
-    });
-
-    /*fs.watch(__dirname + '/www', function(event, filename) {
-      console.log('File changed', filename);
-      browserSync.reload();
-    });*/
-
     _generator.onPhotoshopEvent('imageChanged', handleImageChanged);
+
+    // Open webserver on port 1337
+    http.createServer(function (req, res) {
+      var fileName = req.url;
+      var interval;
+
+      if (fileName === '/stream') {
+
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        });
+
+        res.write('retry: 2000\n');
+        res.write('event: newcontent\n');
+
+        interval = setInterval(function() {
+          res.write('data: ' + reloadPage + '\n\n');
+          reloadPage = false;
+        }, 1000);
+
+        req.connection.addListener('close', function () {
+          clearInterval(interval);
+        }, false);
+
+      } else if (fileName === '/') {
+
+        // Create Base64 encoded image
+        var content = '<img src="data:image/png;base64,' + tempImage + '" alt="Photoshop is slow… Please reload page!">';
+
+        res.writeHead(200, {'Content-Type': 'text/html'});
+
+        res.write('<!DOCTYPE html>\
+        <html><head>\
+            <meta charset="utf-8">\
+            <meta name="viewport" content="width=device-width, minimum-scale=1.0">\
+            <title>Photoshop Generator Webserver</title>\
+            <style>\
+              * { margin: 0; padding: 0; }\
+              body { overflow-x: hidden; }\
+              img { width: 100%; height: auto; }\
+              @media (min-width: 860px) {\
+                img { position: relative; width: auto; left: 50%; transform: translateX(-50%); }\
+              }\
+            </style>\
+          </head><body>')
+        res.write(content);
+        res.write('<script>\
+            var es = new EventSource(\'/stream\');\
+            es.addEventListener(\'message\', function(event) {\
+              if (event.data === \'true\') {\
+                window.location.reload(true)\
+              }\
+            }, false);\
+            </script>\
+        </body></html>')
+
+        // Close file transmission
+        res.end();
+
+      } else {
+        console.error('Error reading file: ' + req.url + ' does not exist!');
+
+        res.writeHead(404);
+        res.write('404');
+        res.end();
+      }
+
+    }).listen(1337, '127.0.0.1');
+
+    // Open default web browser
+    open('http://localhost:1337');
   }
 
 
@@ -157,7 +218,6 @@
       // documentThumbnail always comes in RGB, without Alpha element
       pixmap.channelCount = 3;
       pixmap.pixels = messageBody;
-      //pixmap.pixels.parent = {};
     });
 
 
@@ -180,13 +240,13 @@
 
       // First 16 bytes of pixmap is header, skip it
       var n = 16;
+
       for (var i = 0; i < len; i += 4 ){
         rgbaPixels.writeUInt8(pixels[n], i);
-        rgbaPixels.writeUInt8(pixels[n+1], i + 1);
-        rgbaPixels.writeUInt8(pixels[n+2], i + 2);
+        rgbaPixels.writeUInt8(pixels[n + 1], i + 1);
+        rgbaPixels.writeUInt8(pixels[n + 2], i + 2);
         // Add Alpha
         rgbaPixels.writeUInt8(255, i + 3);
-        //rgbaPixels.writeUInt8(pixels[n+3], i+3);
 
         n += 3;
 
@@ -208,8 +268,9 @@
       // set pixel data
       png.data = rgbaPixels;
 
-      // Write file and reload browsers
-      png.pack().pipe(fs.createWriteStream(tempImagePath).on('finish', browserSync.reload));
+      // Write temporary PNG image for HTML file generation
+      tempImage = PNG.sync.write(png).toString('base64');
+      reloadPage = true;
     },
     function (error) {
         console.error('Error while generating bitmap:', error);

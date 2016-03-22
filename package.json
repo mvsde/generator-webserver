@@ -24,7 +24,6 @@
   },
   "homepage": "https://github.com/mvsde/generator-webserver#readme",
   "dependencies": {
-    "browser-sync": "^2.11.1",
     "open": "0.0.5",
     "pngjs": "^2.2.0"
   }
