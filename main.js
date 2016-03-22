@@ -30,7 +30,7 @@
   var _config    = null;
 
   var tempImage  = null;
-  var reloadPage = false;
+
   var openConnections = [];
 
 
@@ -91,20 +91,16 @@
         });
 
         // Save open connections
-        openConnections.push([res, false]);
+        openConnections.push(res);
 
         // Clean closed connections
         req.connection.addListener('close', function() {
-          var removeConnection = null;
-
           for (var i = 0; i < openConnections.length; i++) {
             if (openConnections[i] == res) {
-              removeConnection = i;
+              openConnections.splice(i, 1);
               break;
             }
           }
-
-          openConnections.splice(removeConnection, 1);
         }, false);
 
       } else if (fileName === '/') {
@@ -132,9 +128,7 @@
         res.write('<script>\
             var es = new EventSource(\'stream\');\
             es.addEventListener(\'ping\', function(event) {\
-              if (event.data === \'true\') {\
-                window.location.reload();\
-              }\
+              window.location.reload();\
             }, false);\
             </script>\
         </body></html>')
@@ -154,15 +148,6 @@
 
     // Open default web browser
     open('http://localhost:1337');
-
-    // Send current document status to every open connection
-    setInterval(function() {
-      openConnections.forEach(function(connection) {
-        connection[0].write('event: ping\n');
-        connection[0].write('data: ' + connection[1] + '\n\n');
-        connection[1] = false;
-      });
-    }, 1000);
   }
 
 
@@ -218,7 +203,7 @@
               'var desc1 = new ActionDescriptor();' +
               'desc1.putInteger( stringIDToTypeID( "width" ), app.activeDocument.width );' + // width
               'desc1.putInteger( stringIDToTypeID( "height" ), app.activeDocument.height );' + // height
-              'desc1.putInteger( stringIDToTypeID("format"), 2 );' + // FORMAT: 2=pixmap, 1=jpeg
+              'desc1.putInteger( stringIDToTypeID( "format"), 2 );' + // FORMAT: 2=pixmap, 1=jpeg
               'executeAction( idNS, desc1, DialogModes.NO );' +
               // Set document units to PIXELS, users often use POINTS, so we force it to PIXELS
               'app.preferences.rulerUnits = Units.PIXELS;' +
@@ -275,19 +260,22 @@
         }
       }
 
+      // Set image dimensions
       var png = new PNG({
         width:  pixmap.width,
         height: pixmap.height
       });
 
-      // set pixel data
+      // Set pixel data
       png.data = rgbaPixels;
 
       // Write temporary PNG image for HTML file generation
       tempImage = PNG.sync.write(png).toString('base64');
 
-      openConnections.forEach(function(connection) {
-        connection[1] = true;
+      // Ping connected clients to reload
+      openConnections.forEach(function(res) {
+        res.write('event: ping\n');
+        res.write('data: Reload browsers…\n\n');
       });
     },
     function (error) {
@@ -297,5 +285,4 @@
 
 
   exports.init = init;
-
 })();
