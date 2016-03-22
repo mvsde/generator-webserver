@@ -33,10 +33,12 @@ Create the following file structure somewhere:
 ## Usage
 In Photoshop activate `File > Generate > Webserver`.
 
-Generator Webserver automatically opens the default web browser via a BrowserSync instance. If the Photoshop document is changed the web browser will be reloaded.
+The current image is available via http://localhost:1337.
+
+The server establishes SSE tunnels to all clients. If the Photoshop image changes all clients will be reloaded.
 
 
 ## ToDo
 * [ ] Make plugin available from built-in Photoshop Generator. Strangely not working…
 * [ ] Add option to disable the webserver once it started.
-* [ ] Move from filesystem-based HTML/PNG to RAM-only solution for faster file serving.
+* [x] Move from filesystem-based HTML/PNG to RAM-only solution for faster file serving.
