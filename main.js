@@ -31,6 +31,7 @@
 
   var tempImage  = null;
   var reloadPage = false;
+  var openConnections = [];
 
 
 
@@ -79,26 +80,31 @@
     // Open webserver on port 1337
     http.createServer(function (req, res) {
       var fileName = req.url;
-      var interval;
 
       if (fileName === '/stream') {
 
+        // Initialize SSE
         res.writeHead(200, {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           'Connection': 'keep-alive'
         });
 
-        res.write('retry: 2000\n');
-        res.write('event: newcontent\n');
+        // Save open connections
+        openConnections.push([res, false]);
 
-        interval = setInterval(function() {
-          res.write('data: ' + reloadPage + '\n\n');
-          reloadPage = false;
-        }, 1000);
+        // Clean closed connections
+        req.connection.addListener('close', function() {
+          var removeConnection = null;
 
-        req.connection.addListener('close', function () {
-          clearInterval(interval);
+          for (var i = 0; i < openConnections.length; i++) {
+            if (openConnections[i] == res) {
+              removeConnection = i;
+              break;
+            }
+          }
+
+          openConnections.splice(removeConnection, 1);
         }, false);
 
       } else if (fileName === '/') {
@@ -116,7 +122,7 @@
             <style>\
               * { margin: 0; padding: 0; }\
               body { overflow-x: hidden; }\
-              img { width: 100%; height: auto; }\
+              img { display: block; width: 100%; height: auto; }\
               @media (min-width: 860px) {\
                 img { position: relative; width: auto; left: 50%; transform: translateX(-50%); }\
               }\
@@ -124,10 +130,10 @@
           </head><body>')
         res.write(content);
         res.write('<script>\
-            var es = new EventSource(\'/stream\');\
-            es.addEventListener(\'message\', function(event) {\
+            var es = new EventSource(\'stream\');\
+            es.addEventListener(\'ping\', function(event) {\
               if (event.data === \'true\') {\
-                window.location.reload(true)\
+                window.location.reload();\
               }\
             }, false);\
             </script>\
@@ -144,10 +150,19 @@
         res.end();
       }
 
-    }).listen(1337, '127.0.0.1');
+    }).listen(1337);
 
     // Open default web browser
     open('http://localhost:1337');
+
+    // Send current document status to every open connection
+    setInterval(function() {
+      openConnections.forEach(function(connection) {
+        connection[0].write('event: ping\n');
+        connection[0].write('data: ' + connection[1] + '\n\n');
+        connection[1] = false;
+      });
+    }, 1000);
   }
 
 
@@ -270,7 +285,10 @@
 
       // Write temporary PNG image for HTML file generation
       tempImage = PNG.sync.write(png).toString('base64');
-      reloadPage = true;
+
+      openConnections.forEach(function(connection) {
+        connection[1] = true;
+      });
     },
     function (error) {
         console.error('Error while generating bitmap:', error);
