@@ -43,35 +43,6 @@
     _generator = generator;
     _config = config;
 
-    _generator.addMenuItem(menuID, menuLabel, true, false).then(
-      function () {
-        console.log('Added menu item:', menuID);
-      }, function() {
-        console.error('Menu creation failed:', menuID);
-      }
-    );
-
-    // Listen to menu button change
-    _generator.onPhotoshopEvent('generatorMenuChanged', handleGeneratorMenuChanged);
-  }
-
-
-
-
-  // Handle generator menu changed
-  // ===================================
-
-  function handleGeneratorMenuChanged(event) {
-    var menu = event.generatorMenuChanged;
-
-    // Only handle menu button change for this plugin
-    if (!menu || menu.name !== menuID) {
-      return
-    }
-
-    // Set menu state
-    updateMenuState(true);
-
     // Initial image generation
     requestEntireDocument();
 
@@ -148,16 +119,6 @@
 
     // Open default web browser
     open('http://localhost:1337');
-  }
-
-
-
-
-  // Update menu state
-  // ===================================
-
-  function updateMenuState(enabled) {
-    _generator.toggleMenu(menuID, true, enabled);
   }
 
 
