@@ -8,6 +8,3 @@ logs
 
 # Dependency directory
 node_modules
-
-# Ignore temp image
-www/image.png
