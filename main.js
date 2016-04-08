@@ -23,20 +23,34 @@
   // Set global constants and variables
   // ===================================
 
-  const menuID    = require('./package.json').name;
+  const menuID = require('./package.json').name;
 
   var _document  = null;
   var _generator = null;
   var _config    = null;
 
-  var tempImage       = null;
+  var tempImage = null;
+
   var openConnections = [];
+
+
+
+
+  // Handle image change with debounce
+  // ===================================
+
+
+  var handleImageChange = debounce(requestEntireDocument, 3000, {
+    'leading': true,
+    'trailing': true
+  });
 
 
 
 
   // Initialize
   // ===================================
+
 
   function init(generator, config) {
     _generator = generator;
@@ -45,7 +59,7 @@
     // Initial image generation
     requestEntireDocument();
 
-    _generator.onPhotoshopEvent('imageChanged', handleImageChanged);
+    _generator.onPhotoshopEvent('imageChanged', handleImageChange);
 
     // Open webserver on port 1337
     http.createServer(function (req, res) {
@@ -135,16 +149,6 @@
 
     // Open default web browser
     open('http://localhost:1337');
-  }
-
-
-
-
-  // Handle image changed
-  // ===================================
-
-  function handleImageChanged(event) {
-    requestEntireDocument();
   }
 
 
