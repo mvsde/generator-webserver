@@ -15,7 +15,6 @@
   const PNG      = require('pngjs').PNG;
   const http     = require('http');
   const open     = require('open');
-  const debounce = require('lodash.debounce');
 
 
 
@@ -30,20 +29,24 @@
   var _config    = null;
 
   var tempImage = null;
+  var imgReady  = true;
 
   var openConnections = [];
 
 
 
 
-  // Handle image change with debounce
+  // Handle image change
   // ===================================
 
 
-  var handleImageChange = debounce(requestEntireDocument, 3000, {
-    'leading': true,
-    'trailing': true
-  });
+  function handleImageChange() {
+    // Only request image if previous image finished
+    if (imgReady) {
+      imgReady = false;
+      requestEntireDocument();
+    }
+  };
 
 
 
@@ -262,6 +265,8 @@
     function (error) {
         console.error('Error while generating bitmap:', error);
     });
+
+    imgReady = true;
   }
 
 
