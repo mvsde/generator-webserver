@@ -1,15 +1,20 @@
 # Adobe Generator Webserver
 
-Open the current Photoshop document as an HTML file with any web browser. Uses the Adobe Generator.
+Open the current Photoshop document as HTML with any web browser. Automatically reload HTML if the Photoshop document changes.
 
 
 ## Dependencies
+
+* Adobe Photoshop
 * [Node.js](https://nodejs.org)
-* [Generator Core](https://github.com/adobe-photoshop/generator-core/archive/master.zip)
+* [Adobe Generator Core](https://github.com/adobe-photoshop/generator-core/archive/master.zip)
 
 
 ## Installation
-Create the following file structure somewhere:
+
+### Folder Structure
+
+This tutorial uses the following folder structure. If you know what you're doing you can easily alter this.
 
 ```
 - adobe-generator
@@ -18,27 +23,23 @@ Create the following file structure somewhere:
     - generator-webserver
 ```
 
+### Step-by-Step Installation
+
 1. Activate remote connection to Photoshop Generator:
-  1. Go to Preferences > Plug-Ins.
-  2. Select `Enable Remote Connections`.
-  3. Set `password` as password.
+  1. In Photoshop go to **Preferences** > **Plug-Ins**.
+  2. Select **Enable Remote Connections**.
+  3. Set **password** as password.
   4. Restart Photoshop.
-2. Unzip the contents of the previously downloaded Generator Core into the corresponding folder.
-3. Get [this plugin](https://github.com/mvsde/generator-webserver/releases/latest) and place it in `generator-webserver`
-4. Run `npm install` inside `generator-core` and `generator-webserver`.
-5. `cd` into `generator-core`.
-6. Run `node app.js -f ../plugins`.
+2. Unzip the contents of the [Generator Core](https://github.com/adobe-photoshop/generator-core/archive/master.zip) into **adobe-generator/generator-core**.
+3. Unzip the contents of [this plugin](https://github.com/mvsde/generator-webserver/archive/master.zip) into **adobe-generator/plugins/generator-webserver**.
+4. Run `npm install` inside **adobe-generator/generator-core** and **adobe-generator/plugins/generator-webserver**.
 
 
 ## Usage
-In Photoshop activate `File > Generate > Webserver`.
 
-The selected Photoshop document is available via http://localhost:1337.
+1. Switch to **adobe-generator/generator-core**.
+2. Run `node app.js -f ../plugins`.
 
-The server establishes SSE tunnels to all clients. If the Photoshop image changes all clients will be reloaded.
+The selected Photoshop document is available at http://localhost:1337. This address automatically opens in the default web browser.
 
-
-## ToDo
-* [ ] Make plugin available from built-in Photoshop Generator. Strangely not working…
-* [ ] Add option to disable the webserver once it started.
-* [x] Move from filesystem-based HTML/PNG to RAM-only solution for faster file serving.
+The server establishes SSE tunnels to all clients. Photoshop document changes trigger a reload event.
