@@ -11,10 +11,11 @@
   // Load node modules
   // ===================================
 
-  const fs   = require('fs');
-  const PNG  = require('pngjs').PNG;
-  const http = require('http');
-  const open = require('open');
+  const fs       = require('fs');
+  const PNG      = require('pngjs').PNG;
+  const http     = require('http');
+  const open     = require('open');
+  const debounce = require('lodash.debounce');
 
 
 
@@ -23,14 +24,12 @@
   // ===================================
 
   const menuID    = require('./package.json').name;
-  const menuLabel = 'Webserver';
 
   var _document  = null;
   var _generator = null;
   var _config    = null;
 
-  var tempImage  = null;
-
+  var tempImage       = null;
   var openConnections = [];
 
 
@@ -77,15 +76,17 @@
       } else if (fileName === '/') {
 
         // Create Base64 encoded image
-        var content = '<img src="data:image/png;base64,' + tempImage + '" alt="Photoshop is slow… Please reload page!">';
+        var b64Img = '<img src="data:image/png;base64,' + tempImage + '" alt="Please wait for Photoshop...">';
 
+        // Write HTTP header
         res.writeHead(200, {'Content-Type': 'text/html'});
 
+        // Write HTML head
         res.write('<!DOCTYPE html>\
         <html><head>\
-            <meta charset="utf-8">\
             <meta name="viewport" content="width=device-width, minimum-scale=1.0">\
             <title>Photoshop Generator Webserver</title>\
+            <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAQAAAD9CzEMAAAA7klEQVR4Ae3Xv0qHUBTA8W8QBG71BE0ijj1DQ48hOPYQPkWbg2/wU4eWXqHVoaknSMQ/NETcICgOknK53jt1vmc7gx84gyje07SEmhHjODMtyf7jB8zBGfaIGuNhGjYbvQATmxlPo4ACCiiggO2UVCGBZy6I6EIBb1wDkLIcB0oeVptP7vgpcwbEKc55kjsKZJUzIE5xycvv7pEzZBGdKyBPEdN/7165Yl3K4gYUyG754J0b/ipzAdangHtytqqwB+QprIvosAfEKexLWeyBHJey//A2nUN//LZegFPYH5CeGPaIhunAcU7EeE7TvgBDCFYGgjAJXwAAAABJRU5ErkJggg==">\
             <style>\
               * { margin: 0; padding: 0; }\
               body { overflow-x: hidden; }\
@@ -95,7 +96,11 @@
               }\
             </style>\
           </head><body>')
-        res.write(content);
+
+        // Write Base64 encoded image
+        res.write(b64Img);
+
+        // Write HTML foot
         res.write('<script>\
             var es = new EventSource(\'stream\');\
             es.addEventListener(\'ping\', function(event) {\
@@ -108,10 +113,21 @@
         res.end();
 
       } else {
-        console.error('Error reading file: ' + req.url + ' does not exist!');
+        // Write HTTP header
+        res.writeHead(404, {'Content-Type': 'text/html'});
 
-        res.writeHead(404);
-        res.write('404');
+        // Write HTML file
+        res.write('<!DOCTYPE html>\
+        <html><head>\
+            <meta name="viewport" content="width=device-width, minimum-scale=1.0">\
+            <title>Photoshop Generator Webserver</title>\
+            <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAQAAAD9CzEMAAAA7klEQVR4Ae3Xv0qHUBTA8W8QBG71BE0ijj1DQ48hOPYQPkWbg2/wU4eWXqHVoaknSMQ/NETcICgOknK53jt1vmc7gx84gyje07SEmhHjODMtyf7jB8zBGfaIGuNhGjYbvQATmxlPo4ACCiiggO2UVCGBZy6I6EIBb1wDkLIcB0oeVptP7vgpcwbEKc55kjsKZJUzIE5xycvv7pEzZBGdKyBPEdN/7165Yl3K4gYUyG754J0b/ipzAdangHtytqqwB+QprIvosAfEKexLWeyBHJey//A2nUN//LZegFPYH5CeGPaIhunAcU7EeE7TvgBDCFYGgjAJXwAAAABJRU5ErkJggg==">\
+          </head><body>\
+          <h1>404 Not Found</h1>\
+          <a href="/">Return to Image</a>\
+        </body></html>')
+
+        // Close file transmission
         res.end();
       }
 

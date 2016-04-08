@@ -26,5 +26,8 @@
   "dependencies": {
     "open": "0.0.5",
     "pngjs": "^2.2.0"
+  },
+  "devDependencies": {
+    "lodash.debounce": "^4.0.4"
   }
 }
